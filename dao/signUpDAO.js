@@ -1,22 +1,14 @@
 const mysql = require('mysql');
+const uuid = require('short-uuid');
 const { connectionDAO } = require("./connectionDAO");
 
 class signUpDAO extends connectionDAO {
     
-    doesUsernameExists(data) {
-        return new Promise((resolve, reject) => {
-            super.getConnection().query(
-                'SELECT COUNT(*) AS Num FROM User WHERE Username=?',
-                [data['username']],
-                (err, results) => {
-                    if (err)
-                        reject(err);
-                    resolve(results[0]['Num'] === 1 ? 'Username Already Exists' : null);
-                }
-            )
-        });
-    }
-
+    /**
+     * Returns a Promise that queries the database and checks whether the email entered is already registered to an account
+     * @param {JSON} data User input data that must contain email 
+     * @returns {Promise<string>} text-based message if account exists
+     */
     doesAccountExist(data) {
         return new Promise((resolve, reject) => {
             super.getConnection().query(
@@ -25,28 +17,63 @@ class signUpDAO extends connectionDAO {
                 (err, results) => {
                     if (err)
                         reject(err);
-                    resolve(results[0]['Num'] === 1 ? 'Email Already Exists' : null);
+                    resolve(results[0]['Num'] === 1 ? 'Account Already Exists' : null);
                 }
             )
         });
     }
 
+    /**
+     * Runs procedures to verify a pre-existing account does not exist
+     * @param {JSON} data User input data 
+     * @returns {string} returns a message if account is created or not
+     */
     async validateNewAccount(data) {
         const existingAcc = await this.doesAccountExist(data).then((result) => {return result});
-        const existingUser = await this.doesUsernameExists(data).then((result) => {return result});
         
-        if (existingAcc || existingUser)
-            return (existingAcc ? existingAcc : '') + '\n' + (existingUser ? existingUser : '');
+        if (existingAcc)
+            return (existingAcc ? existingAcc : '');
 
-        const createNewAcc = await this.createNewAccount(data).then((result) => {return result});
-        return createNewAcc;
+        const userID = uuid().new();
+        const createNewAcc = await this.createNewAccount(data, userID).then((result) => {return result});
+        let createBusAcc = '';
+        
+        if (data['businessOwner'] === 1)
+            createBusAcc = await this.createBusinessAccount(userID).then((result) => {return result});
+        
+        return createNewAcc + '\n' + createBusAcc;
     }
 
-    createNewAccount(data) {
+    /**
+     * Creates a business account using the userID
+     * @param {number} userID ID in uuid format
+     * @returns {Promise<string>} returns a Promise<string> object if account is created
+     */
+    createBusinessAccount(userID) {
         return new Promise((resolve, reject) => {
             super.getConnection().query(
-                'INSERT INTO User VALUES (0,?,?,?,?,?);',
-                [data['email'], data['username'], data['password'], data['name'], data['businessOwner']],
+                'INSERT INTO BusinessOwner (UserID) VALUES (?);',
+                [userID],
+                (err) => {
+                    if (err) 
+                        reject(err);
+                    resolve('Business Account Created!');
+                }
+            )
+        });
+    }
+
+    /**
+     * Creates a new account using user input data and uuid
+     * @param {JSON} data User input data
+     * @param {number} userID ID in uuid format 
+     * @returns 
+     */
+    createNewAccount(data, userID) {
+        return new Promise((resolve, reject) => {
+            super.getConnection().query(
+                'INSERT INTO User VALUES (?,?,?,?,?);',
+                [userID, data['name'], data['email'], data['password'], data['businessOwner']],
                 (err) => {
                     if (err) 
                         reject(err);
