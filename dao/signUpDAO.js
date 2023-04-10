@@ -45,12 +45,12 @@ class signUpDAO extends connectionDAO {
     createNewAccount(data) {
         return new Promise((resolve, reject) => {
             super.getConnection().query(
-                'INSERT INTO User VALUES (0,?,?,?,?);',
-                [data['email'], data['username'], data['password'], data['name']],
+                'INSERT INTO User VALUES (0,?,?,?,?,?);',
+                [data['email'], data['username'], data['password'], data['name'], data['businessOwner']],
                 (err) => {
                     if (err) 
                         reject(err);
-                    resolve(true);
+                    resolve('New Account Created!');
                 }
             )
         });
