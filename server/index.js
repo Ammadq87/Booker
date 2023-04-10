@@ -1,8 +1,8 @@
 //#region Imports and Libraries
 const express = require('express');
 const bodyParser = require('body-parser')
-const login = require('../routes/login');
-const signUp = require('../routes/signUp');
+const login = require('../backend/routes/login');
+const signUp = require('../backend/routes/signUp');
 
 //#endregion
 
