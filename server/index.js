@@ -2,6 +2,7 @@
 const express = require('express');
 const bodyParser = require('body-parser')
 const login = require('../routes/login');
+const signUp = require('../routes/signUp');
 
 //#endregion
 
@@ -20,6 +21,7 @@ app.get('/', (req, res) => {
 
 //#region Setting up routes
 app.use('/login', login);
+app.use('/signUp', signUp);
 //#endregion
 
 //#region set up port connection
