@@ -1,9 +1,12 @@
 const mysql = require('mysql');
 const uuid = require('short-uuid');
 const { connectionDAO } = require("./connectionDAO");
+const message = require('../messageOutput');
 
 class signUpDAO extends connectionDAO {
     
+    _message = new message.message();
+
     /**
      * Returns a Promise that queries the database and checks whether the email entered is already registered to an account
      * @param {JSON} data User input data that must contain email 
@@ -15,9 +18,27 @@ class signUpDAO extends connectionDAO {
                 'SELECT COUNT(*) AS Num FROM User WHERE Email=?',
                 [data['email']],
                 (err, results) => {
-                    if (err)
+                    if (err){
+                        this._message.addMessage(0, 'SQL Error')
                         reject(err);
-                    resolve(results[0]['Num'] === 1 ? 'Account Already Exists' : null);
+                    }
+                    
+                    if (!results){
+                        this._message.addMessage(1, 'Unique Account...')
+                        resolve(false)
+                    }
+
+                    if (results[0]['Num'] === 0){
+                        this._message.addMessage(1, 'Valid Username...')
+                        resolve(false)
+                    }
+
+                    if (results[0]['Num'] === 1){
+                        this._message.addMessage(0, 'Account Already Exists')
+                        resolve(true);
+                    }
+
+                    resolve(false);
                 }
             )
         });
@@ -29,19 +50,19 @@ class signUpDAO extends connectionDAO {
      * @returns {string} returns a message if account is created or not
      */
     async validateNewAccount(data) {
+        this._message.clearMessageList();
         const existingAcc = await this.doesAccountExist(data).then((result) => {return result});
         
         if (existingAcc)
-            return (existingAcc ? existingAcc : '');
+            return (this._message.getMessageList());
 
         const userID = uuid().new();
-        const createNewAcc = await this.createNewAccount(data, userID).then((result) => {return result});
-        let createBusAcc = '';
+        await this.createNewAccount(data, userID).then((result) => {return result});
         
         if (data['businessOwner'] === 1)
-            createBusAcc = await this.createBusinessAccount(userID).then((result) => {return result});
+            await this.createBusinessAccount(userID).then((result) => {return result});
         
-        return createNewAcc + '\n' + createBusAcc;
+        return this._message.getMessageList();
     }
 
     /**
@@ -57,7 +78,8 @@ class signUpDAO extends connectionDAO {
                 (err) => {
                     if (err) 
                         reject(err);
-                    resolve('Business Account Created!');
+                    this._message.addMessage(1, 'Business Account Created!')
+                    resolve(true);
                 }
             )
         });
@@ -77,7 +99,8 @@ class signUpDAO extends connectionDAO {
                 (err) => {
                     if (err) 
                         reject(err);
-                    resolve('New Account Created!');
+                    this._message.addMessage(1, 'New Account Created!')
+                    resolve(true);
                 }
             )
         });
