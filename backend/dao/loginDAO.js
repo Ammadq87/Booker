@@ -1,7 +1,6 @@
 const { connectionDAO } = require("./connectionDAO");
 
 class loginDAO extends connectionDAO {
-    
     /**
      * Checks if entered credentials are existing in the database
      * @param {JSON} data - JSON object containing key-value pairs for username and password 
