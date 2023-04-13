@@ -60,29 +60,9 @@ class signUpDAO extends connectionDAO {
         await this.createNewAccount(data, userID).then((result) => {return result});
         
         if (data['businessOwner'] === 1)
-            await this.createBusinessAccount(userID).then((result) => {return result});
+            this._message.addMessage(1, "Business Account Created!");   
         
         return this._message.getMessageList();
-    }
-
-    /**
-     * Creates a business account using the userID
-     * @param {number} userID ID in uuid format
-     * @returns {Promise<string>} returns a Promise<string> object if account is created
-     */
-    createBusinessAccount(userID) {
-        return new Promise((resolve, reject) => {
-            super.getConnection().query(
-                'INSERT INTO BusinessOwner (UserID) VALUES (?);',
-                [userID],
-                (err) => {
-                    if (err) 
-                        reject(err);
-                    this._message.addMessage(1, 'Business Account Created!')
-                    resolve(true);
-                }
-            )
-        });
     }
 
     /**
