@@ -58,10 +58,9 @@ class signUpDAO extends connectionDAO {
 
         const userID = uuid().new();
         await this.createNewAccount(data, userID).then((result) => {return result});
-        
-        if (data['businessOwner'] === 1)
+        if (parseInt(data['businessOwner']) === 1) {
             this._message.addMessage(1, "Business Account Created!");   
-        
+        }
         return this._message.getMessageList();
     }
 
